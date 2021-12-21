@@ -1,3 +1,4 @@
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -12,6 +13,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
+
+import java.net.http.HttpClient;
 
 @WebServlet(name = "StoresServlet", value = "/StoresServlet")
 public class StoresServlet extends HttpServlet {
@@ -30,10 +33,22 @@ public class StoresServlet extends HttpServlet {
   private static final int DATE_IDX = 5;
   private static final int DATE_CONTENT_IDX = 6;
 
+  private static final HttpClient client = null;
+
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    response.setStatus(HttpServletResponse.SC_OK);
+//    response.setContentType("text/html");
+//    response.getWriter().println("stores ordering system requests arrived!");
+//    try {
+//      Thread.sleep(1000);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
+
+
+//    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     return;
 
   }
