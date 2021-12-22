@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -28,8 +29,8 @@ public class StoresSimulationCMLParser {
   private static final int NUM_PURCHASE_PER_HOUR_DEFAULT = 60;
   //  private static final String NUM_ITEMS_EACH_PURCHASE_FLAG = "numItemsEachPurchase";
   private static final String NUM_ITEMS_EACH_PURCHASE_DESC = "number of items for each purchase, larger than 0 and default 5";
-  private static final int NUM_ITEMS_EACH_PURCHASE_DEFAULT = 5;
-  private Map<OptionsFlags, Object> optsToArgs;
+  private static final int NUM_ITEMS_EACH_PURCHASE_DEFAULT = 10;
+  private Map<OptionsFlags, Object> optsToArgs= new HashMap<>();
   private CommandLine cmdLines;
   private static final String RE_INT_PATTERN = "^\\d+$";
 
@@ -88,8 +89,8 @@ public class StoresSimulationCMLParser {
     String date = cmdLines.getOptionValue(OptionsFlags.date.toString());
     try {
       DateTimeFormatter dateFormatter = DateTimeFormatter.BASIC_ISO_DATE;
-      LocalDate.parse(date, dateFormatter);
-      this.optsToArgs.put(OptionsFlags.date, date);
+      LocalDate parsedDate = LocalDate.parse(date, dateFormatter);
+      this.optsToArgs.put(OptionsFlags.date, parsedDate);
     } catch (DateTimeParseException e) {
       throw new InvalidArgumentException("provided date argument is not valid");
     }
@@ -108,7 +109,7 @@ public class StoresSimulationCMLParser {
   private void validateMaxItemID(CommandLine cmdLines) throws InvalidArgumentException {
     String maxItemId = cmdLines.getOptionValue(OptionsFlags.maxItemID.toString());
     if (maxItemId == null) {
-      this.optsToArgs.put(OptionsFlags.customersIdRange, MAX_ITEM_ID_DEFAULT);
+      this.optsToArgs.put(OptionsFlags.maxItemID, MAX_ITEM_ID_DEFAULT);
     } else if (!maxItemId.matches(RE_INT_PATTERN) || !(Integer.valueOf(maxItemId) > 0)) {
       throw new InvalidArgumentException("MaxItemID must be positive integer");
     }
