@@ -9,7 +9,7 @@ public class HttpMultiThreadClientsGet {
     long timeBefore = System.currentTimeMillis();
     for (int i = 0; i < NUM_OF_THREADS; i++) {
       // lambda runnable creation - interface only has a single method so lambda works fine
-      Runnable thread =  new RunnableHttpGet(i,completed);
+      Runnable thread =  new RunnableClientGet(i,completed);
       new Thread(thread).start();
       };
     completed.await();

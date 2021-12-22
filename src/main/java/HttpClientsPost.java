@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
@@ -17,6 +18,19 @@ public class HttpClientsPost {
       .connectTimeout(Duration.ofSeconds(10))
       .build();
 
+  private TimeZone timeZone;
+  private int clientId;
+  private Map<OptionsFlags, Object> options;
+
+  public HttpClientsPost(TimeZone timeZone, int clientId, Map<OptionsFlags, Object> options) {
+    this.timeZone = timeZone;
+    this.clientId = clientId;
+    this.options = options;
+  }
+
+  public void post(){
+
+  }
   public static void main(String[] args)
       throws URISyntaxException, IOException, InterruptedException {
     JsonObject item1 = Json.createObjectBuilder().add("ItemID", "3847").add("numberOfItems", 2).build();

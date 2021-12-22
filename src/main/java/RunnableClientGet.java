@@ -9,11 +9,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.servlet.http.HttpServletResponse;
 
-public class RunnableHttpGet implements Runnable {
+public class RunnableClientGet implements Runnable {
 
   private int id;
   private CountDownLatch completed;
-  public RunnableHttpGet(int id,  CountDownLatch completed) {
+  public RunnableClientGet(int id,  CountDownLatch completed) {
     this.id = id;
     this.completed = completed;
   }
