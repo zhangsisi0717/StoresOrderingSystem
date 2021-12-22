@@ -14,7 +14,8 @@ public class HttpClientsGet {
       .version(HttpClient.Version.HTTP_2)
       .connectTimeout(Duration.ofSeconds(10))
       .build();
-  private static final String GET_URL = "http://localhost:8080/StoresOrderingSystem/purchase";
+//  private static final String GET_URL = "http://localhost:8080/StoresOrderingSystem/purchase";
+  private static final String GET_URL = "http://54.202.251.227:8080/StoresOrderingSystem/purchase";
   private final int clientID;
 
   public HttpClientsGet(int clientID) {
@@ -32,9 +33,11 @@ public class HttpClientsGet {
     CompletableFuture<HttpResponse<String>> response =
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-    String result = response.thenApply(HttpResponse::body).get(5, TimeUnit.SECONDS);
-
-//    System.out.println("client " + this.clientID + " "+ result);
+    String result = response.thenApply(HttpResponse::body).get(30, TimeUnit.SECONDS);
+    System.out.println("client " + this.clientID + " " + result);
   }
 
+  public int getClientID() {
+    return clientID;
+  }
 }

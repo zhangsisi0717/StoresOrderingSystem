@@ -1,4 +1,5 @@
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class HttpMultiThreadClientsGet {
   final static private int NUM_OF_THREADS = 100;
@@ -16,7 +17,8 @@ public class HttpMultiThreadClientsGet {
     System.out.println("finish " + NUM_OF_THREADS + " requests!");
     System.out.println("timeBefore= " + timeBefore);
     System.out.println("timeAfter= " + timeAfter);
-    System.out.println();
+    System.out.println("total requesting time = "+ TimeUnit.MILLISECONDS.toSeconds(timeAfter-timeBefore) + " s");
+
   }
 
 }

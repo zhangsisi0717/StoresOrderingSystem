@@ -19,13 +19,14 @@ public class RunnableHttpGet implements Runnable {
   }
 
   @Override
-  synchronized public void run() {
-//    System.out.println("thread = " + this.id + " had been created!");
+  public void run() {
+    System.out.println("thread = " + this.id + " had been created!");
+    HttpClientsGet client = new HttpClientsGet(this.id);
     try{
-      HttpClientsGet client = new HttpClientsGet(this.id);
       client.get();
     }catch (Exception e){
-      System.out.println(e.getMessage());
+//      System.out.println("error!");
+      System.out.println("client " + client.getClientID() + " " + e);
     }
     this.completed.countDown();
   }
