@@ -12,6 +12,7 @@ import java.util.Objects;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import org.apache.commons.httpclient.HttpStatus;
 
 
 public class HttpClientsPost {
@@ -22,6 +23,7 @@ public class HttpClientsPost {
   private static final int NUM_ITEMS_UB = 4;
   private static final int NUM_ITEMS_LB = 1;
   private static final int CONNECTION_TIME_OUT = 10;
+  private static final int CREATED = 201;
   private static final String URI_FORMAT = "http://%s/StoresOrderingSystem/purchase/%d/customer/%d/date/%s";
   private static final String DATE_FORMAT = "yyyyMMdd";
   private static final String HEADER_1 = "User-Agent";
@@ -42,32 +44,30 @@ public class HttpClientsPost {
   private int customerId;
   private String formattedDate;
   private HttpResponse<String> response;
+  private RequestCounter requestCounter;
 
-  public HttpClientsPost(TimeZone timeZone,int clientId, Map<OptionsFlags, Object> options) {
+  public HttpClientsPost(TimeZone timeZone,int clientId, Map<OptionsFlags, Object> options,RequestCounter requestCounter) {
     this.timeZone = timeZone;
     this.clientId = clientId;
     this.options = options;
+    this.requestCounter = requestCounter;
     this.storeId = this.genStoreId();
     this.customerId = this.genCustomerID();
     this.formattedDate = this.genFormattedDate();
   }
 
   public void post() throws URISyntaxException, IOException, InterruptedException {
-//    System.out.println("run here!");
     this.genAllItems();
-    System.out.println("all items: = " + this.genAllItems().toString());
-//    System.out.println("run here2!");
+    System.out.println("order items: = " + this.genAllItems().toString());
     this.request = this.genRequest();
-//    System.out.println("run here3!");
     HttpResponse<String> response = HTTP_CLIENT.send(this.request, HttpResponse.BodyHandlers.ofString());
-//    System.out.println("run here4!");
-    this.response = response;
-//    System.out.println("run here5!");
-    // print status code
-//    System.out.println(response.statusCode());
 
-    // print response body
-    System.out.println(response.body());
+    if(response.statusCode() == CREATED){
+      this.requestCounter.incSuccess();
+    }
+
+    this.response = response;
+    System.out.println("client " + this.getClientId() + ", timeZone: " + this.timeZone.toString() +": "+" status code: " + response.statusCode() +" response: " + response.body());
   }
 
   private int genStoreId() {
@@ -112,7 +112,7 @@ public class HttpClientsPost {
   private HttpRequest genRequest() throws URISyntaxException {
     String ip = (String) this.options.get(OptionsFlags.ip);
     String uri = String.format(URI_FORMAT, ip, this.storeId, this.customerId, this.formattedDate);
-    System.out.println("uri = " + uri);
+//    System.out.println("uri = " + uri);
     HttpRequest request = HttpRequest.newBuilder()
         .POST(HttpRequest.BodyPublishers.ofString(this.allItems.toString()))
         .uri(new URI(uri))
@@ -127,38 +127,38 @@ public class HttpClientsPost {
     return clientId;
   }
 
-    public static void main(String[] args)
-      throws URISyntaxException, IOException, InterruptedException {
-    JsonObject item1 = Json.createObjectBuilder().add("ItemID", "3847").add("numberOfItems", 2)
-        .build();
-    JsonObject item2 = Json.createObjectBuilder().add("ItemID", "4532").add("numberOfItems", 5)
-        .build();
-    JsonArrayBuilder jsonArray = Json.createArrayBuilder().add(item1).add(item2);
-    JsonObject allItems = Json.createObjectBuilder().add("items", jsonArray).build();
-
-    System.out.println(allItems.toString());
-    HttpRequest request = HttpRequest.newBuilder()
-        .POST(HttpRequest.BodyPublishers.ofString(allItems.toString()))
-        .uri(new URI(
-            "http://localhost:8080/StoresOrderingSystem/purchase/12345/customer/111222/date/20211212"))
-        .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
-        .header("Content-Type", "application/json")
-        .build();
-
-      HttpClient http_client = HttpClient.newBuilder()
-          .version(HttpClient.Version.HTTP_2)
-          .connectTimeout(Duration.ofSeconds(CONNECTION_TIME_OUT))
-          .build();
-    HttpResponse<String> response = http_client.send(request, HttpResponse.BodyHandlers.ofString());
-
-    // print status code
-    System.out.println(response.statusCode());
-
-    // print response body
-    System.out.println(response.body());
-
-
-  }
+//    public static void main(String[] args)
+//      throws URISyntaxException, IOException, InterruptedException {
+//    JsonObject item1 = Json.createObjectBuilder().add("ItemID", "3847").add("numberOfItems", 2)
+//        .build();
+//    JsonObject item2 = Json.createObjectBuilder().add("ItemID", "4532").add("numberOfItems", 5)
+//        .build();
+//    JsonArrayBuilder jsonArray = Json.createArrayBuilder().add(item1).add(item2);
+//    JsonObject allItems = Json.createObjectBuilder().add("items", jsonArray).build();
+//
+//    System.out.println(allItems.toString());
+//    HttpRequest request = HttpRequest.newBuilder()
+//        .POST(HttpRequest.BodyPublishers.ofString(allItems.toString()))
+//        .uri(new URI(
+//            "http://localhost:8080/StoresOrderingSystem/purchase/12345/customer/111222/date/20211212"))
+//        .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+//        .header("Content-Type", "application/json")
+//        .build();
+//
+//      HttpClient http_client = HttpClient.newBuilder()
+//          .version(HttpClient.Version.HTTP_2)
+//          .connectTimeout(Duration.ofSeconds(CONNECTION_TIME_OUT))
+//          .build();
+//    HttpResponse<String> response = http_client.send(request, HttpResponse.BodyHandlers.ofString());
+//
+//    // print status code
+//    System.out.println(response.statusCode());
+//
+//    // print response body
+//    System.out.println(response.body());
+//
+//
+//  }
 
 
 }
