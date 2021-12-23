@@ -7,74 +7,43 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.cli.ParseException;
 
-public class MultiThreadsClientsPost {
-
-  private static int TIME_ZONE_DIFF = 1;
-  private static int REQUEST_DURATION = 2;
+public class TestFileWriter {
+  private static int REQUEST_DURATION = 1;
 
   private static final String[] HEADERS = {"clientId", "timeZone", "statusCode", "startTime","latency"};
   private static BlockingQueue queue = new LinkedBlockingQueue();
-
   public static void main(String[] args)
       throws InvalidArgumentException, ParseException, InterruptedException {
-    //{clientId, timeZone, status_code, timeStampBeforeRequest,latency}//
-
     String writeOutPath = "output" + File.separator + "result.csv";
     StoresSimulationCMLParser parser = new StoresSimulationCMLParser();
     Map<OptionsFlags, Object> options = parser.parse(args);
 
     int numOfStores = (int) options.get(OptionsFlags.maxNumStore);
 
-    int numStoresWest = numOfStores / 3;
-    int numStoresCentral = numOfStores / 3;
-
-    queue.add(HEADERS);
     RequestCounter requestCounter = new RequestCounter();
     CountDownLatch completed = new CountDownLatch(numOfStores);
     LocalDateTime startTimeStampWest = LocalDateTime.now();
     // create file writer thread
+
+    queue.add(HEADERS);
     RunnableFileWriter fileWriterRunnable = new RunnableFileWriter(queue,writeOutPath);
     Thread fileWriterThread = new Thread(fileWriterRunnable);
     fileWriterThread.start();
 
     //launch stores in west
-    for (int i = 0; i < numStoresWest; i++) {
+    for (int i = 0; i < numOfStores; i++) {
       Runnable thread = new RunnableClientPost(i + 1, TimeZone.WEST, completed, options,
           startTimeStampWest, REQUEST_DURATION,requestCounter,queue);
       new Thread(thread).start();
     }
-    ;
-
-    while (true) {
-      if (Duration.between(startTimeStampWest, LocalDateTime.now()).toMinutes() >= TIME_ZONE_DIFF) {
-        break;
-      }
-    }
-    //launch stores in west
-    LocalDateTime startTimeStampCentral = LocalDateTime.now();
-    for (int j = numStoresWest; j < numStoresWest + numStoresCentral; j++) {
-      Runnable thread = new RunnableClientPost(j + 1, TimeZone.CENTRAL, completed, options,
-          startTimeStampCentral, REQUEST_DURATION,requestCounter,queue);
-      new Thread(thread).start();
-    }
-    ;
-
-    while (true) {
-      if (Duration.between(startTimeStampCentral, LocalDateTime.now()).toMinutes()
-          >= TIME_ZONE_DIFF) {
-        break;
-      }
-    }
-    LocalDateTime startTimeStampEast = LocalDateTime.now();
-    for (int k = numStoresWest + numStoresCentral; k < numOfStores; k++) {
-      Runnable thread = new RunnableClientPost(k + 1, TimeZone.EAST, completed, options,
-          startTimeStampEast, REQUEST_DURATION,requestCounter,queue);
-      new Thread(thread).start();
-    }
-    ;
 
     completed.await();
+
+    System.out.println("all thread stopped");
+
     fileWriterRunnable.requestStop();
+
+
     fileWriterThread.join();
 
     LocalDateTime endTimeStamp = LocalDateTime.now();
@@ -86,6 +55,4 @@ public class MultiThreadsClientsPost {
     System.out.println(requestCounter);
     System.out.println("throughput= " + requestCounter.getNumSuccessfulRequest()/totalTimeInSeconds);
   }
-
 }
-

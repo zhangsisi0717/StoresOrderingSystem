@@ -1,6 +1,8 @@
 public class RequestCounter {
   private int numSuccessfulRequest=0;
   private int attemptedRequest=0;
+  private double meanResponseTime;
+  private Long cumulativeResponseTime;
 
   synchronized public  void incSuccess() {
     numSuccessfulRequest++;

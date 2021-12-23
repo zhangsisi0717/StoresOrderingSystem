@@ -1,6 +1,7 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
 public class RunnableClientPost implements Runnable {
@@ -12,9 +13,11 @@ public class RunnableClientPost implements Runnable {
   private LocalDateTime startTimeStamp;
   private final int timeDiffMin;
   private RequestCounter requestCounter;
+  private BlockingQueue queue;
+
 
   public RunnableClientPost(int id, TimeZone timeZone, CountDownLatch completed,
-      Map<OptionsFlags, Object> options, LocalDateTime startTimeStamp, int timeDiffMin,RequestCounter requestCounter) {
+      Map<OptionsFlags, Object> options, LocalDateTime startTimeStamp, int timeDiffMin,RequestCounter requestCounter, BlockingQueue queue) {
     this.id = id;
     this.timeZone = timeZone;
     this.completed = completed;
@@ -22,31 +25,32 @@ public class RunnableClientPost implements Runnable {
     this.startTimeStamp = startTimeStamp;
     this.timeDiffMin = timeDiffMin;
     this.requestCounter = requestCounter;
+    this.queue = queue;
 
   }
 
   @Override
   public void run() {
     System.out.println("thread = " + this.id + " TimeZone = " + this.timeZone.toString() + " had been created!");
-    HttpClientsPost client = new HttpClientsPost(this.timeZone, this.id, this.options,this.requestCounter);
+    HttpClientsPost client = new HttpClientsPost(this.timeZone, this.id, this.options,this.requestCounter,this.queue);
     while (true) {
       if (Duration.between(this.startTimeStamp, LocalDateTime.now()).toMinutes() >= timeDiffMin) {
         break;
       }
       try {
-        this.requestCounter.incAttemptedRequest();
         client.post();
       } catch (Exception e) {
         System.out.println("client " + client.getClientId() + " " + e);
       }
       try {
-        Thread.sleep(30000);
+//        Thread.sleep(30000);
+        Thread.sleep(1000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }
-    this.completed.countDown();
     System.out.println(this.id + " client stops");
+    this.completed.countDown();
   }
 
 }

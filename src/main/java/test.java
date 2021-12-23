@@ -1,32 +1,36 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+
 public class test {
-  public static void main(String[] args) throws InterruptedException {
-    LocalDateTime cur = LocalDateTime.now();
-    System.out.println(cur);
-    Thread.sleep(10000);
-    LocalDateTime cur2 = LocalDateTime.now();
-    System.out.println(cur2);
-    Duration dur = Duration.between(cur,cur2);
-    System.out.println(dur.toSeconds());
-//    String date = "20211212";
-//    DateTimeFormatter dateFormatter = DateTimeFormatter.BASIC_ISO_DATE;
-//    LocalDate parsedDate = LocalDate.parse(date, dateFormatter);
-//    String formattedDate = parsedDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-//    int storeId = 111;
-//    int custId = 1212;
-//    String ip = "localhost:8080";
-//
-//    String temp = "http://%s/StoresOrderingSystem/purchase/%d/customer/%d/date/%s";
-//
-//    String sf1=String.format(temp,ip,storeId,custId,formattedDate);
-//    System.err.println(sf1);
-//
-//    System.out.println((int)(Math.random()*1000)+1);
+  public static void main(String[] args) throws InterruptedException, IOException {
+//    String currentPath = new java.io.File(".").getCanonicalPath();
+//    System.out.println(currentPath);
+//    File file = new File("/requestResult.csv");
+//    if (!file.exists())
+//    {
+//      file.createNewFile();
+//    }
+
+    String[][] all = {{"sisi","yuchen","rourou","beibei"},{"sisi","yuchen","rourou","beibei"}};
+    String writeOutPath = "output" + File.separator + "result.csv";
+    try(BufferedWriter writer = new BufferedWriter(new FileWriter(writeOutPath))) {
+      for(String[] names: all){
+        for(String name: names){
+          writer.write(name+ ",");
+        }
+        writer.write(System.lineSeparator());
+      }
+      }
+    }
   }
 
-}
+
