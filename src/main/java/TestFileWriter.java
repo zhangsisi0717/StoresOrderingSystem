@@ -1,6 +1,7 @@
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -20,7 +21,7 @@ public class TestFileWriter {
 
     int numOfStores = (int) options.get(OptionsFlags.maxNumStore);
 
-    RequestCounter requestCounter = new RequestCounter();
+    RequestStats requestStats = new RequestStats();
     CountDownLatch completed = new CountDownLatch(numOfStores);
     LocalDateTime startTimeStampWest = LocalDateTime.now();
     // create file writer thread
@@ -33,7 +34,7 @@ public class TestFileWriter {
     //launch stores in west
     for (int i = 0; i < numOfStores; i++) {
       Runnable thread = new RunnableClientPost(i + 1, TimeZone.WEST, completed, options,
-          startTimeStampWest, REQUEST_DURATION,requestCounter,queue);
+          startTimeStampWest, REQUEST_DURATION,requestStats,queue);
       new Thread(thread).start();
     }
 
@@ -52,7 +53,13 @@ public class TestFileWriter {
     System.out.println(
         "total run time = " + totalTimeInMin + " mins");
 
-    System.out.println(requestCounter);
-    System.out.println("throughput= " + requestCounter.getNumSuccessfulRequest()/totalTimeInSeconds);
+    System.out.println(requestStats);
+    int numRequest = requestStats.getLatencyList().size();
+//    System.out.println("throughput= " + requestStats.getNumSuccessfulRequest()/totalTimeInSeconds*1000 + " ms");
+    System.out.println("mean response time: " + requestStats.getCumulativeLatencySum()/numRequest + " ms");
+    Collections.sort(requestStats.getLatencyList());
+
+    System.out.println("99 percentile response time = " + requestStats.getLatencyList().get((int)(numRequest*0.99)) + " ms");
+    System.out.println("95 percentile response time = " + requestStats.getLatencyList().get((int)(numRequest*0.95)) + " ms");
   }
 }

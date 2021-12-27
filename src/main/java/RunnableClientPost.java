@@ -12,12 +12,13 @@ public class RunnableClientPost implements Runnable {
   private Map<OptionsFlags, Object> options;
   private LocalDateTime startTimeStamp;
   private final int timeDiffMin;
-  private RequestCounter requestCounter;
+  private RequestStats requestCounter;
   private BlockingQueue queue;
 
 
   public RunnableClientPost(int id, TimeZone timeZone, CountDownLatch completed,
-      Map<OptionsFlags, Object> options, LocalDateTime startTimeStamp, int timeDiffMin,RequestCounter requestCounter, BlockingQueue queue) {
+      Map<OptionsFlags, Object> options, LocalDateTime startTimeStamp, int timeDiffMin,
+      RequestStats requestCounter, BlockingQueue queue) {
     this.id = id;
     this.timeZone = timeZone;
     this.completed = completed;

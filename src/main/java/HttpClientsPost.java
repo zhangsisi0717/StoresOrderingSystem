@@ -9,12 +9,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import org.apache.commons.httpclient.HttpStatus;
 
 
 public class HttpClientsPost {
@@ -28,7 +26,7 @@ public class HttpClientsPost {
   private int customerId;
   private String formattedDate;
   private HttpResponse<String> response;
-  private RequestCounter requestCounter;
+  private RequestStats requestStats;
   private LocalDateTime timeStampBeforeRequest;
   private LocalDateTime timeStampAfterRequest;
   private BlockingQueue queue;
@@ -52,11 +50,12 @@ public class HttpClientsPost {
       .build();
 
 
-  public HttpClientsPost(TimeZone timeZone,int clientId, Map<OptionsFlags, Object> options,RequestCounter requestCounter, BlockingQueue queue) {
+  public HttpClientsPost(TimeZone timeZone,int clientId, Map<OptionsFlags, Object> options,
+      RequestStats requestCounter, BlockingQueue queue) {
     this.timeZone = timeZone;
     this.clientId = clientId;
     this.options = options;
-    this.requestCounter = requestCounter;
+    this.requestStats = requestCounter;
     this.queue = queue;
     this.storeId = this.genStoreId();
     this.customerId = this.genCustomerID();
@@ -67,20 +66,22 @@ public class HttpClientsPost {
     this.genAllItems();
     System.out.println("order items: = " + this.genAllItems().toString());
     this.request = this.genRequest();
-    this.requestCounter.incAttemptedRequest();
+    this.requestStats.incAttemptedRequest();
     this.timeStampBeforeRequest = LocalDateTime.now();
     //https://mkyong.com/java/java-11-httpclient-examples/
     HttpResponse<String> response = HTTP_CLIENT.send(this.request, HttpResponse.BodyHandlers.ofString());
     this.timeStampAfterRequest = LocalDateTime.now();
     if(response.statusCode() == CREATED){
-      this.requestCounter.incSuccess();
+      this.requestStats.incSuccess();
     }
     this.response = response;
 
     //{clientId, timeZone, status_code, timeStampBeforeRequest,latency}
-    String latency = String.valueOf(Duration.between(this.timeStampBeforeRequest,this.timeStampAfterRequest).toMillis());
+    Long latencyMillis = Duration.between(this.timeStampBeforeRequest,this.timeStampAfterRequest).toMillis();
+    String latency = String.valueOf(latencyMillis);
     String[] singleRequestResult = {String.valueOf(this.clientId), this.timeZone.toString(),String.valueOf(this.response.statusCode()),this.timeStampBeforeRequest.toString(),latency};
     this.queue.add(singleRequestResult);
+    this.requestStats.addToLatencyList(latencyMillis);
     System.out.println("client " + this.getClientId() + ", timeZone: " + this.timeZone.toString() +": "+" status code: " + response.statusCode() +" response: " + response.body());
   }
 
