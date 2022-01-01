@@ -18,7 +18,6 @@ import javax.json.JsonObject;
 public class HttpClientsPost {
   private JsonObject allItems;
   private HttpRequest request;
-
   private TimeZone timeZone;
   private int clientId;
   private Map<OptionsFlags, Object> options;
