@@ -1,11 +1,13 @@
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.MessageProperties;
 
 public class testSender {
   private final static String QUEUE_NAME = "hello";
 
   public static void main(String[] argv) throws Exception{
+
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost"); //connect to a RabbitMQ on a local machine
 
@@ -13,10 +15,17 @@ public class testSender {
         Channel channel = connection.createChannel()) {
 
       //Declaring a queue is idempotent - it will only be created if it doesn't exist already
-      channel.queueDeclare(QUEUE_NAME, false, false, false, null); //declare a queue for us to send to then we can publish a message to the queue
+      //https://rabbitmq.github.io/rabbitmq-java-client/api/4.x.x/com/rabbitmq/client/Channel.html#queueDeclare(java.lang.String,boolean,boolean,boolean,java.util.Map)
 
-      String message = "Hello World!";
-      channel.basicPublish("", QUEUE_NAME, null, message.getBytes()); //publish a message to the queue
+      boolean durable = true;
+      channel.queueDeclare(QUEUE_NAME, durable, false, false, null); //declare a queue for us to send to then we can publish a message to the queue
+
+      //basicPublish(String exchange, String routingKey, AMQP.BasicProperties props, byte[] body)
+      String message = String.join(" ", argv);
+
+      // if exchange = "", then just use the default exchange aka nameless exchange,
+      // each queue is automatically bound to the default exchange with the name of queue as the binding key.
+      channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes()); //publish a message to the queue
 
       System.out.println(" [x] Sent '" + message + "'");
 
@@ -24,8 +33,5 @@ public class testSender {
     }
 
   }
-
-
-
 
 }
