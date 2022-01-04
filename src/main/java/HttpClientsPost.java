@@ -67,6 +67,7 @@ public class HttpClientsPost {
     this.request = this.genRequest();
     this.requestStats.incAttemptedRequest();
     this.timeStampBeforeRequest = LocalDateTime.now();
+
     //https://mkyong.com/java/java-11-httpclient-examples/
     HttpResponse<String> response = HTTP_CLIENT.send(this.request, HttpResponse.BodyHandlers.ofString());
     this.timeStampAfterRequest = LocalDateTime.now();
@@ -102,6 +103,8 @@ public class HttpClientsPost {
   }
 
 
+
+///ItemID, numberOfItems
   private JsonObject genItem() {
     String itemID = String.valueOf(
         (int) (Math.random() * ((int) this.options.get(OptionsFlags.maxItemID))));
