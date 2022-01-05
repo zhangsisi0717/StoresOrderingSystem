@@ -17,6 +17,7 @@ import javax.servlet.annotation.*;
 import java.io.IOException;
 import java.sql.Date;
 import java.net.http.HttpClient;
+import org.apache.commons.dbcp2.*;
 
 @WebServlet(name = "StoresServlet", value = "/StoresServlet")
 public class StoresServlet extends HttpServlet {
@@ -85,6 +86,7 @@ public class StoresServlet extends HttpServlet {
     try {
       this.processBodyData(postBodyJSONString);
     } catch (Exception e) {
+      e.printStackTrace();
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       return;
     }
@@ -137,8 +139,8 @@ public class StoresServlet extends HttpServlet {
     JsonObject postBodyJSON = jsonReader.readObject();
 
     String orderID = postBodyJSON.getString(ORDER_ID_FLAG);
-    Integer customerID = Integer.valueOf(postBodyJSON.getString(CUSTOMER_ID_FLAG));
-    Integer storeID = Integer.valueOf(postBodyJSON.getString(STORE_ID_FLAG));
+    Integer customerID = postBodyJSON.getInt(CUSTOMER_ID_FLAG);
+    Integer storeID = postBodyJSON.getInt(STORE_ID_FLAG);
     Date date = Date.valueOf(postBodyJSON.getString(DATE_FLAG));
 
 
@@ -147,9 +149,10 @@ public class StoresServlet extends HttpServlet {
       int itemID = jo.getInt(ITEMS_ID);
       int numberOfItem = jo.getInt(NUM_OF_ITEMS);
       Double price = Double.valueOf(jo.get(PRICE_FLAG).toString());
-      OrderedItem orderedItem = new OrderedItem(storeID,customerID,orderID,itemID,numberOfItem,price,date);
-      allOrderedItems.add(orderedItem);
+      OrderedItem newItem = new OrderedItem(storeID,customerID,orderID,itemID,numberOfItem,price,date);
+      allOrderedItems.add(newItem);
     }
+
     this.addOrdersToDB(allOrderedItems);
 
   }

@@ -16,13 +16,7 @@ public class test {
     Date d = Date.valueOf(LocalDate.now().toString());
     System.out.println(d);
 
-//    Date d = Date.valueOf(LocalDate.now());
-//    UUID uuid = UUID.randomUUID();
-//    System.out.println(uuid.toString());
-//    System.out.println(UUID.randomUUID().toString().replace("-","").substring(0,12));
-//
-//    LocalDate d = LocalDate.now();
-//    System.out.println(d.toString());
+
 
   }
 }
