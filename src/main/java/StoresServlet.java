@@ -3,6 +3,8 @@ import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -13,25 +15,32 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
-
+import java.sql.Date;
 import java.net.http.HttpClient;
 
 @WebServlet(name = "StoresServlet", value = "/StoresServlet")
 public class StoresServlet extends HttpServlet {
 
   private static final int VALID_URL_LENGTH_FOR_POST = 7;
+  private static final String ORDER_ID_FLAG = "OrderID";
+  private static final String CUSTOMER_ID_FLAG = "CustomerID";
+  private static final String STORE_ID_FLAG = "StoreID";
+  private static final String PRICE_FLAG = "Price";
+  private static final String DATE_FLAG = "Date";
+
   private static final String PURCHASE = "purchase";
   private static final String CUSTOMER = "customer";
   private static final String DATE = "date";
-  private static final String ITEMS = "items";
+  private static final String ITEMS = "Items";
   private static final String ITEMS_ID = "ItemID";
-  private static final String NUM_OF_ITEMS = "numberOfItems";
+  private static final String NUM_OF_ITEMS = "NumOfItems";
   private static final int PURCHASE_IDX = 1;
   private static final int STORE_ID_IDX = 2;
   private static final int CUSTOMER_IDX = 3;
   private static final int CUSTOMER_ID_IDX = 4;
   private static final int DATE_IDX = 5;
   private static final int DATE_CONTENT_IDX = 6;
+
 
 //  private static final HttpClient client = null;
 
@@ -42,7 +51,7 @@ public class StoresServlet extends HttpServlet {
     response.setContentType("text/html");
     response.getWriter().println("stores ordering system requests arrived!");
     try {
-      Thread.sleep(1000);
+      Thread.sleep(30000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -122,20 +131,31 @@ public class StoresServlet extends HttpServlet {
 
   private void processBodyData(String postBodyJSONString) {
     //https://docs.oracle.com/javaee/7/api/javax/json/JsonObject.html
+
+    List<OrderedItem> allOrderedItems = new ArrayList<>();
     JsonReader jsonReader = Json.createReader(new StringReader(postBodyJSONString));
     JsonObject postBodyJSON = jsonReader.readObject();
 
+    String orderID = postBodyJSON.getString(ORDER_ID_FLAG);
+    Integer customerID = Integer.valueOf(postBodyJSON.getString(CUSTOMER_ID_FLAG));
+    Integer storeID = Integer.valueOf(postBodyJSON.getString(STORE_ID_FLAG));
+    Date date = Date.valueOf(postBodyJSON.getString(DATE_FLAG));
+
+
     for (JsonValue jv : postBodyJSON.getJsonArray(ITEMS)) {
       JsonObject jo = (JsonObject) jv;
-      String itemID = jo.getString(ITEMS_ID);
+      int itemID = jo.getInt(ITEMS_ID);
       int numberOfItem = jo.getInt(NUM_OF_ITEMS);
-      processOrder(itemID, numberOfItem);
+      Double price = Double.valueOf(jo.get(PRICE_FLAG).toString());
+      OrderedItem orderedItem = new OrderedItem(storeID,customerID,orderID,itemID,numberOfItem,price,date);
+      allOrderedItems.add(orderedItem);
     }
-
+    this.addOrdersToDB(allOrderedItems);
 
   }
 
-  private void processOrder(String ItemID, int numberOfItem) {
-
+  private void addOrdersToDB(List<OrderedItem> orderedItems) {
+    StoresOrdersDAO dao = new StoresOrdersDAO();
+    dao.addNewOrderedItem(orderedItems);
   }
 }

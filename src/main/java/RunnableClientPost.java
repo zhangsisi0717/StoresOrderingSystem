@@ -14,6 +14,7 @@ public class RunnableClientPost implements Runnable {
   private final int timeDiffMin;
   private RequestStats requestCounter;
   private BlockingQueue queue;
+  private static final int SLEEP_TIME_MS = 30000;
 
 
   public RunnableClientPost(int id, TimeZone timeZone, CountDownLatch completed,
@@ -44,8 +45,7 @@ public class RunnableClientPost implements Runnable {
         System.out.println("client " + client.getClientId() + " " + e);
       }
       try {
-//        Thread.sleep(30000);
-        Thread.sleep(1000);
+        Thread.sleep(SLEEP_TIME_MS);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

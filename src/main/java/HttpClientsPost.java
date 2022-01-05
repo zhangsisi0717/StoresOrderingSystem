@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import java.util.UUID;
 
 
 public class HttpClientsPost {
@@ -30,13 +31,21 @@ public class HttpClientsPost {
   private LocalDateTime timeStampAfterRequest;
   private BlockingQueue queue;
 
+  private static final String ORDER_ID_FLAG = "OrderID";
+  private static final String CUSTOMER_ID_FLAG = "CustomerID";
+  private static final String STORE_ID_FLAG = "StoreID";
   private static final String ITEM_ID_FLAG = "ItemID";
-  private static final String ITEMS_FLAG = "items";
-  private static final String NUM_ITEMS_FLAG = "numberOfItems";
+  private static final String ITEMS_FLAG = "Items";
+  private static final String NUM_ITEMS_FLAG = "NumOfItems";
+  private static final String PRICE_FLAG = "Price";
+  private static final String DATE_FLAG = "Date";
+  private static final int PRICE_UB = 1000;
+  private static final int PRICE_LB = 4;
   private static final int NUM_ITEMS_UB = 4;
   private static final int NUM_ITEMS_LB = 1;
   private static final int CONNECTION_TIME_OUT = 20;
   private static final int CREATED = 201;
+  private static final int UUID_UB = 12;
   private static final String URI_FORMAT = "http://%s/StoresOrderingSystem/purchase/%d/customer/%d/date/%s";
   private static final String DATE_FORMAT = "yyyyMMdd";
   private static final String HEADER_1 = "User-Agent";
@@ -61,7 +70,7 @@ public class HttpClientsPost {
     this.formattedDate = this.genFormattedDate();
   }
 
-  public void post() throws URISyntaxException, IOException, InterruptedException {
+  public void post() throws URISyntaxException, IOException, InterruptedException, NullException {
     this.genAllItems();
     System.out.println("order items: = " + this.genAllItems().toString());
     this.request = this.genRequest();
@@ -97,7 +106,7 @@ public class HttpClientsPost {
 
   private String genFormattedDate() {
     LocalDate date = (LocalDate) this.options.get(OptionsFlags.date);
-    DateTimeFormatter dateFormatter = DateTimeFormatter.BASIC_ISO_DATE;
+//    DateTimeFormatter dateFormatter = DateTimeFormatter.BASIC_ISO_DATE;
     String formattedDate = date.format(DateTimeFormatter.ofPattern(DATE_FORMAT));
     return formattedDate;
   }
@@ -106,11 +115,12 @@ public class HttpClientsPost {
 
 ///ItemID, numberOfItems
   private JsonObject genItem() {
-    String itemID = String.valueOf(
-        (int) (Math.random() * ((int) this.options.get(OptionsFlags.maxItemID))));
+    int itemID = (int) (Math.random() * ((int) this.options.get(OptionsFlags.maxItemID)));
     int numItems = (int) (Math.random() * NUM_ITEMS_UB) + NUM_ITEMS_LB;
+    double netPrice = Math.round((Math.random() * PRICE_UB + PRICE_LB)*100)/100;
     JsonObject item = Json.createObjectBuilder().add(ITEM_ID_FLAG, itemID)
-        .add(NUM_ITEMS_FLAG, numItems).build();
+        .add(NUM_ITEMS_FLAG, numItems).add(PRICE_FLAG, numItems*netPrice).build();
+
     return item;
   }
 
@@ -122,12 +132,24 @@ public class HttpClientsPost {
     for (int i = 0; i < totalItems; i++) {
       jsonArray = jsonArray.add(this.genItem());
     }
-    JsonObject allItems = Json.createObjectBuilder().add(ITEMS_FLAG, jsonArray).build();
+    JsonObject allItems = Json.createObjectBuilder().add(ITEMS_FLAG, jsonArray)
+        .add(ORDER_ID_FLAG, genOrderId())
+        .add(CUSTOMER_ID_FLAG,this.customerId)
+        .add(STORE_ID_FLAG,this.storeId)
+        .add(DATE_FLAG,LocalDate.now().toString())
+        .build();
     this.allItems = allItems;
     return allItems;
   }
 
-  private HttpRequest genRequest() throws URISyntaxException {
+  private static String genOrderId(){
+    return UUID.randomUUID().toString().replace("-","").substring(0,UUID_UB);
+  }
+
+  private HttpRequest genRequest() throws URISyntaxException, NullException {
+    if(this.allItems == null){
+      throw new NullException("all items properties should not be null");
+    }
     String ip = (String) this.options.get(OptionsFlags.ip);
     String uri = String.format(URI_FORMAT, ip, this.storeId, this.customerId, this.formattedDate);
     HttpRequest request = HttpRequest.newBuilder()

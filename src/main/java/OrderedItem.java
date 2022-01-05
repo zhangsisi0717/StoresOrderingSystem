@@ -1,18 +1,18 @@
-import java.time.LocalDate;
+import java.sql.Date;
 
 public class OrderedItem {
   private final int storeId;
-  private final int clientId;
+  private final int customerId;
   private final String orderId;
   private final int itemID;
   private final int numOfItems;
   private final double price;
-  private final LocalDate date;
+  private final Date date;
   private OrderStatus status;
 
-  public OrderedItem(int storeId, int clientId, String orderId, int itemID, int numOfItems, double price, LocalDate date) {
+  public OrderedItem(int storeId, int customerId, String orderId, int itemID, int numOfItems, double price, Date date) {
     this.storeId = storeId;
-    this.clientId = clientId;
+    this.customerId = customerId;
     this.orderId = orderId;
     this.itemID = itemID;
     this.numOfItems = numOfItems;
@@ -21,8 +21,8 @@ public class OrderedItem {
     this.status = OrderStatus.preparing;
   }
 
-  public int getClientId() {
-    return clientId;
+  public int getCustomerId() {
+    return customerId;
   }
 
   public String getOrderId() {
@@ -37,11 +37,15 @@ public class OrderedItem {
     return numOfItems;
   }
 
+  public int getStoreId() {
+    return storeId;
+  }
+
   public double getPrice() {
     return price;
   }
 
-  public LocalDate getDate() {
+  public Date getDate() {
     return date;
   }
 
