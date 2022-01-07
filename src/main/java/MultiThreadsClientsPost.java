@@ -11,9 +11,9 @@ import org.apache.commons.cli.ParseException;
 public class MultiThreadsClientsPost {
 
   private static int TIME_ZONE_DIFF = 1;
-  private static int REQUEST_DURATION = 2;
+  private static int REQUEST_DURATION = 5;
 
-  private static final String[] HEADERS = {"clientId", "timeZone", "statusCode", "startTime","latency"};
+  private static final String[] HEADERS = {"clientId", "timeZone", "statusCode", "startTime","latency","postBody"};
   private static BlockingQueue queue = new LinkedBlockingQueue();
   private static final int numTimeZones = 3;
 

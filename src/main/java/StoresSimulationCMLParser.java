@@ -20,7 +20,8 @@ public class StoresSimulationCMLParser {
   private static final String IP_DESC = "IP/port address of the server";
   //  private static final String CUSTOMER_ID_RANGE_FLAG = "customersIdRange";
   private static final String CUSTOMER_ID_RANGE_DESC = "This is the range of customerIDs per store -default 2000";
-  private static final int CUSTOMER_ID_RANGE_DEFAULT = 2000;
+  private static final int CUSTOMER_ID_RANGE_DEFAULT = 5000000;
+  private static final int REQUEST_PER_HOUR_DEFAULT = 60;
   //  private static final String MAX_ITEM_ID_FLAG = "maxItemID";
   private static final String MAX_ITEM_ID_DESC = "maximum itemID - default 200000";
   private static final int MAX_ITEM_ID_DEFAULT = 200000;
@@ -30,7 +31,7 @@ public class StoresSimulationCMLParser {
   //  private static final String NUM_ITEMS_EACH_PURCHASE_FLAG = "numItemsEachPurchase";
   private static final String NUM_ITEMS_EACH_PURCHASE_DESC = "number of items for each purchase, larger than 0 and default 5";
   private static final int NUM_ITEMS_EACH_PURCHASE_DEFAULT = 10;
-  private Map<OptionsFlags, Object> optsToArgs= new HashMap<>();
+  private Map<OptionsFlags, Object> optsToArgs = new HashMap<>();
   private CommandLine cmdLines;
   private static final String RE_INT_PATTERN = "^\\d+$";
 
@@ -38,6 +39,7 @@ public class StoresSimulationCMLParser {
     Options options = new Options();
     options.addOption(
         Option.builder(OptionsFlags.maxNumStore.toString()).required().hasArg().build());
+
     options.addOption(Option.builder(OptionsFlags.ip.toString()).required().hasArg().build());
     options.addOption(Option.builder(OptionsFlags.date.toString()).required().hasArg().build());
     options.addOption(
@@ -51,6 +53,8 @@ public class StoresSimulationCMLParser {
     options.addOption(
         Option.builder(OptionsFlags.numItemsEachPurchase.toString()).optionalArg(true).hasArg()
             .build());
+//    options.addOption(Option.builder(OptionsFlags.numRequestPerHour.toString()).optionalArg(true).hasArg().build());
+
     return options;
   }
 
@@ -103,6 +107,8 @@ public class StoresSimulationCMLParser {
       this.optsToArgs.put(OptionsFlags.customersIdRange, CUSTOMER_ID_RANGE_DEFAULT);
     } else if (!idRange.matches(RE_INT_PATTERN) || !(Integer.valueOf(idRange) > 0)) {
       throw new InvalidArgumentException("customer id range must be positive integer");
+    } else {
+      this.optsToArgs.put(OptionsFlags.customersIdRange, Integer.valueOf(idRange));
     }
   }
 
@@ -112,6 +118,8 @@ public class StoresSimulationCMLParser {
       this.optsToArgs.put(OptionsFlags.maxItemID, MAX_ITEM_ID_DEFAULT);
     } else if (!maxItemId.matches(RE_INT_PATTERN) || !(Integer.valueOf(maxItemId) > 0)) {
       throw new InvalidArgumentException("MaxItemID must be positive integer");
+    } else {
+      this.optsToArgs.put(OptionsFlags.maxItemID, Integer.valueOf(maxItemId));
     }
   }
 
@@ -121,6 +129,8 @@ public class StoresSimulationCMLParser {
       this.optsToArgs.put(OptionsFlags.numPurchasesPerHour, NUM_PURCHASE_PER_HOUR_DEFAULT);
     } else if (!numPurchase.matches(RE_INT_PATTERN) || !(Integer.valueOf(numPurchase) > 0)) {
       throw new InvalidArgumentException("Number of purchase per hour must be positive integer");
+    } else {
+      this.optsToArgs.put(OptionsFlags.numPurchasesPerHour, Integer.valueOf(numPurchase));
     }
   }
 
@@ -132,6 +142,8 @@ public class StoresSimulationCMLParser {
     } else if (!numItems.matches(RE_INT_PATTERN) || !(Integer.valueOf(numItems) > 0)) {
       throw new InvalidArgumentException(
           "Number of items for each purchase must be positive integer");
+    } else {
+      this.optsToArgs.put(OptionsFlags.numItemsEachPurchase, Integer.valueOf(numItems));
     }
   }
 

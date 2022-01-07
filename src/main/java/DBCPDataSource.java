@@ -8,7 +8,7 @@ public class DBCPDataSource {
 
   private static BasicDataSource dataSource;
 
-  private static final String CONFIG_FILE = "/usr/local/Cellar/tomcat@8/8.5.73/libexec/conf/catalina.properties";
+  private static final String CONFIG_FILE = "/etc/sql_credentials.properties";
   // NEVER store sensitive information below in plain text!
   private static String HOST_NAME;
   private static String PORT;
@@ -23,7 +23,8 @@ public class DBCPDataSource {
       prop.load(input);
       HOST_NAME=prop.getProperty("MySQL_IP_ADDRESS");
       PORT = prop.getProperty("MySQL_PORT");
-      DATABASE = "sys";
+      DATABASE = prop.getProperty("DB_NAME");
+//      DATABASE = "sys";
       USERNAME = prop.getProperty("DB_USERNAME");
       PASSWORD = prop.getProperty("DB_PASSWORD");
     }

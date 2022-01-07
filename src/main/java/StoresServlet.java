@@ -1,5 +1,6 @@
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -131,7 +132,7 @@ public class StoresServlet extends HttpServlet {
     return true;
   }
 
-  private void processBodyData(String postBodyJSONString) {
+  private void processBodyData(String postBodyJSONString) throws SQLException {
     //https://docs.oracle.com/javaee/7/api/javax/json/JsonObject.html
 
     List<OrderedItem> allOrderedItems = new ArrayList<>();
@@ -157,7 +158,7 @@ public class StoresServlet extends HttpServlet {
 
   }
 
-  private void addOrdersToDB(List<OrderedItem> orderedItems) {
+  private void addOrdersToDB(List<OrderedItem> orderedItems) throws SQLException {
     StoresOrdersDAO dao = new StoresOrdersDAO();
     dao.addNewOrderedItem(orderedItems);
   }

@@ -14,7 +14,9 @@ public class RunnableClientPost implements Runnable {
   private final int timeDiffMin;
   private RequestStats requestCounter;
   private BlockingQueue queue;
-  private static final int SLEEP_TIME_MS = 30000;
+  private static int HOUR_TO_MS=1000*60*60;
+  private int sleepTime;
+//  private static final String NUM_PURCHASE_PER_HOUR_FLAG = "numPurchasesPerHour";
 
 
   public RunnableClientPost(int id, TimeZone timeZone, CountDownLatch completed,
@@ -28,6 +30,7 @@ public class RunnableClientPost implements Runnable {
     this.timeDiffMin = timeDiffMin;
     this.requestCounter = requestCounter;
     this.queue = queue;
+    this.genSleepTime();
 
   }
 
@@ -45,13 +48,17 @@ public class RunnableClientPost implements Runnable {
         System.out.println("client " + client.getClientId() + " " + e);
       }
       try {
-        Thread.sleep(SLEEP_TIME_MS);
+        Thread.sleep(this.sleepTime);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
     }
     System.out.println(this.id + " client stops");
     this.completed.countDown();
+  }
+
+  private void genSleepTime(){
+    this.sleepTime = HOUR_TO_MS / Integer.valueOf(this.options.get(OptionsFlags.numPurchasesPerHour).toString());
   }
 
 }

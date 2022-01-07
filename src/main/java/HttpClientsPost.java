@@ -4,11 +4,14 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -30,6 +33,7 @@ public class HttpClientsPost {
   private LocalDateTime timeStampBeforeRequest;
   private LocalDateTime timeStampAfterRequest;
   private BlockingQueue queue;
+  private int numOfNewItems;
 
   private static final String ORDER_ID_FLAG = "OrderID";
   private static final String CUSTOMER_ID_FLAG = "CustomerID";
@@ -39,6 +43,7 @@ public class HttpClientsPost {
   private static final String NUM_ITEMS_FLAG = "NumOfItems";
   private static final String PRICE_FLAG = "Price";
   private static final String DATE_FLAG = "Date";
+  private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
   private static final int PRICE_UB = 1000;
   private static final int PRICE_LB = 4;
   private static final int NUM_ITEMS_UB = 4;
@@ -59,11 +64,11 @@ public class HttpClientsPost {
 
 
   public HttpClientsPost(TimeZone timeZone,int clientId, Map<OptionsFlags, Object> options,
-      RequestStats requestCounter, BlockingQueue queue) {
+      RequestStats requestStats, BlockingQueue queue) {
     this.timeZone = timeZone;
     this.clientId = clientId;
     this.options = options;
-    this.requestStats = requestCounter;
+    this.requestStats = requestStats;
     this.queue = queue;
     this.storeId = this.genStoreId();
     this.customerId = this.genCustomerID();
@@ -75,6 +80,7 @@ public class HttpClientsPost {
     System.out.println("order items: = " + this.genAllItems().toString());
     this.request = this.genRequest();
     this.requestStats.incAttemptedRequest();
+    this.requestStats.incAttemptAddItems(this.numOfNewItems);
     this.timeStampBeforeRequest = LocalDateTime.now();
 
     //https://mkyong.com/java/java-11-httpclient-examples/
@@ -82,13 +88,19 @@ public class HttpClientsPost {
     this.timeStampAfterRequest = LocalDateTime.now();
     if(response.statusCode() == CREATED){
       this.requestStats.incSuccess();
+      this.requestStats.incItems(this.numOfNewItems);
     }
     this.response = response;
 
     //{clientId, timeZone, status_code, timeStampBeforeRequest,latency}
     Long latencyMillis = Duration.between(this.timeStampBeforeRequest,this.timeStampAfterRequest).toMillis();
     String latency = String.valueOf(latencyMillis);
-    String[] singleRequestResult = {String.valueOf(this.clientId), this.timeZone.toString(),String.valueOf(this.response.statusCode()),this.timeStampBeforeRequest.toString(),latency};
+    String[] singleRequestResult = {String.valueOf(this.clientId), this.timeZone.toString(),String.valueOf(this.response.statusCode()),this.timeStampBeforeRequest.toString(),latency,""};
+
+    if(response.statusCode() !=CREATED){
+      singleRequestResult[4] = this.allItems.toString();
+    }
+
     this.queue.add(singleRequestResult);
     this.requestStats.addToLatencyList(latencyMillis);
     System.out.println("client " + this.getClientId() + ", timeZone: " + this.timeZone.toString() +": "+" status code: " + response.statusCode() +" response: " + response.body());
@@ -106,7 +118,6 @@ public class HttpClientsPost {
 
   private String genFormattedDate() {
     LocalDate date = (LocalDate) this.options.get(OptionsFlags.date);
-//    DateTimeFormatter dateFormatter = DateTimeFormatter.BASIC_ISO_DATE;
     String formattedDate = date.format(DateTimeFormatter.ofPattern(DATE_FORMAT));
     return formattedDate;
   }
@@ -117,7 +128,7 @@ public class HttpClientsPost {
   private JsonObject genItem() {
     int itemID = (int) (Math.random() * ((int) this.options.get(OptionsFlags.maxItemID)));
     int numItems = (int) (Math.random() * NUM_ITEMS_UB) + NUM_ITEMS_LB;
-    double netPrice = Math.round((Math.random() * PRICE_UB + PRICE_LB)*100)/100;
+    double netPrice = Math.floor((Math.random()*PRICE_UB+PRICE_LB)*100)/100.0;
     JsonObject item = Json.createObjectBuilder().add(ITEM_ID_FLAG, itemID)
         .add(NUM_ITEMS_FLAG, numItems).add(PRICE_FLAG, numItems*netPrice).build();
 
@@ -128,12 +139,24 @@ public class HttpClientsPost {
     int totalItems =
         (int) (Math.random() * (int) this.options.get(OptionsFlags.numItemsEachPurchase))
             + NUM_ITEMS_LB;
+    this.numOfNewItems = totalItems;
     JsonArrayBuilder jsonArray = Json.createArrayBuilder();
-    for (int i = 0; i < totalItems; i++) {
-      jsonArray = jsonArray.add(this.genItem());
+    Set<Integer> itemIdSet = new HashSet<>();
+
+    while(itemIdSet.size()<totalItems){
+      JsonObject curItem = this.genItem();
+      int tempId = curItem.getInt(ITEM_ID_FLAG);
+      if (!itemIdSet.contains(tempId)){
+        itemIdSet.add(tempId);
+        jsonArray.add(curItem);
+      }
     }
+//    for (int i = 0; i < totalItems; i++) {
+//      jsonArray = jsonArray.add(this.genItem());
+//    }
+    String orderId = HttpClientsPost.genOrderId();
     JsonObject allItems = Json.createObjectBuilder().add(ITEMS_FLAG, jsonArray)
-        .add(ORDER_ID_FLAG, genOrderId())
+        .add(ORDER_ID_FLAG, orderId)
         .add(CUSTOMER_ID_FLAG,this.customerId)
         .add(STORE_ID_FLAG,this.storeId)
         .add(DATE_FLAG,LocalDate.now().toString())
@@ -164,39 +187,4 @@ public class HttpClientsPost {
   public int getClientId() {
     return clientId;
   }
-
-//    public static void main(String[] args)
-//      throws URISyntaxException, IOException, InterruptedException {
-//    JsonObject item1 = Json.createObjectBuilder().add("ItemID", "3847").add("numberOfItems", 2)
-//        .build();
-//    JsonObject item2 = Json.createObjectBuilder().add("ItemID", "4532").add("numberOfItems", 5)
-//        .build();
-//    JsonArrayBuilder jsonArray = Json.createArrayBuilder().add(item1).add(item2);
-//    JsonObject allItems = Json.createObjectBuilder().add("items", jsonArray).build();
-//
-//    System.out.println(allItems.toString());
-//    HttpRequest request = HttpRequest.newBuilder()
-//        .POST(HttpRequest.BodyPublishers.ofString(allItems.toString()))
-//        .uri(new URI(
-//            "http://localhost:8080/StoresOrderingSystem/purchase/12345/customer/111222/date/20211212"))
-//        .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
-//        .header("Content-Type", "application/json")
-//        .build();
-//
-//      HttpClient http_client = HttpClient.newBuilder()
-//          .version(HttpClient.Version.HTTP_2)
-//          .connectTimeout(Duration.ofSeconds(CONNECTION_TIME_OUT))
-//          .build();
-//    HttpResponse<String> response = http_client.send(request, HttpResponse.BodyHandlers.ofString());
-//
-//    // print status code
-//    System.out.println(response.statusCode());
-//
-//    // print response body
-//    System.out.println(response.body());
-//
-//
-//  }
-
-
 }
