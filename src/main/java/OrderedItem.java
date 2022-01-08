@@ -1,6 +1,9 @@
 import java.sql.Date;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public class OrderedItem {
+public class OrderedItem implements Serializable {
   private final int storeId;
   private final int customerId;
   private final String orderId;
@@ -55,5 +58,19 @@ public class OrderedItem {
 
   public void setStatus(OrderStatus status) {
     this.status = status;
+  }
+
+  @Override
+  public String toString() {
+    return "OrderedItem{" +
+        "storeId=" + storeId +
+        ", customerId=" + customerId +
+        ", orderId='" + orderId + '\'' +
+        ", itemID=" + itemID +
+        ", numOfItems=" + numOfItems +
+        ", price=" + price +
+        ", date=" + date +
+        ", status=" + status +
+        '}';
   }
 }

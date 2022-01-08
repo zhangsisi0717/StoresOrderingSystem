@@ -7,7 +7,7 @@ public class StoresOrdersDAO {
   private static BasicDataSource dataSource;
 
   public StoresOrdersDAO() {
-    dataSource = DBCPDataSource.getDataSource();
+    dataSource = CredentialConfig.getDataSource();
   }
 
   public void addNewOrderedItem(List<OrderedItem> orderedItems) throws SQLException {

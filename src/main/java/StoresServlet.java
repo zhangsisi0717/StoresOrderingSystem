@@ -1,11 +1,23 @@
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -29,6 +41,7 @@ public class StoresServlet extends HttpServlet {
   private static final String STORE_ID_FLAG = "StoreID";
   private static final String PRICE_FLAG = "Price";
   private static final String DATE_FLAG = "Date";
+  private static final String QUEUE_NAME = "store_orders";
 
   private static final String PURCHASE = "purchase";
   private static final String CUSTOMER = "customer";
@@ -43,6 +56,22 @@ public class StoresServlet extends HttpServlet {
   private static final int DATE_IDX = 5;
   private static final int DATE_CONTENT_IDX = 6;
 
+  private com.rabbitmq.client.ConnectionFactory factory;
+
+
+  @Override
+  public void init() throws ServletException {
+    System.out.println("Servlet init() called");
+    try {
+      factory = new ConnectionFactory();
+      factory.setUri(CredentialConfig.getMqURI());
+      factory.setUsername(CredentialConfig.getMqUsername());
+      factory.setPassword(CredentialConfig.getMqPassword());
+    } catch (Exception e) {
+      System.out.println("Exception during init()");
+      e.printStackTrace();
+    }
+  }
 
 //  private static final HttpClient client = null;
 
@@ -58,7 +87,6 @@ public class StoresServlet extends HttpServlet {
       e.printStackTrace();
     }
 
-
 //    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     return;
 
@@ -69,7 +97,6 @@ public class StoresServlet extends HttpServlet {
       throws ServletException, IOException {
     response.setContentType("application/json");
     String urlPath = request.getPathInfo();
-
 
     // check we have a URL!
     if (urlPath == null || urlPath.isEmpty()) {
@@ -132,7 +159,8 @@ public class StoresServlet extends HttpServlet {
     return true;
   }
 
-  private void processBodyData(String postBodyJSONString) throws SQLException {
+  private void processBodyData(String postBodyJSONString)
+      throws SQLException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
     //https://docs.oracle.com/javaee/7/api/javax/json/JsonObject.html
 
     List<OrderedItem> allOrderedItems = new ArrayList<>();
@@ -144,17 +172,17 @@ public class StoresServlet extends HttpServlet {
     Integer storeID = postBodyJSON.getInt(STORE_ID_FLAG);
     Date date = Date.valueOf(postBodyJSON.getString(DATE_FLAG));
 
-
     for (JsonValue jv : postBodyJSON.getJsonArray(ITEMS)) {
       JsonObject jo = (JsonObject) jv;
       int itemID = jo.getInt(ITEMS_ID);
       int numberOfItem = jo.getInt(NUM_OF_ITEMS);
       Double price = Double.valueOf(jo.get(PRICE_FLAG).toString());
-      OrderedItem newItem = new OrderedItem(storeID,customerID,orderID,itemID,numberOfItem,price,date);
+      OrderedItem newItem = new OrderedItem(storeID, customerID, orderID, itemID, numberOfItem,
+          price, date);
       allOrderedItems.add(newItem);
     }
 
-    this.addOrdersToDB(allOrderedItems);
+    this.sendMessageToMQ(allOrderedItems);
 
   }
 
@@ -162,4 +190,21 @@ public class StoresServlet extends HttpServlet {
     StoresOrdersDAO dao = new StoresOrdersDAO();
     dao.addNewOrderedItem(orderedItems);
   }
+
+  private static byte[] writeToByteArray(List<OrderedItem> allOrderedItems) throws IOException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(bos);
+    oos.writeObject(allOrderedItems);
+    return bos.toByteArray();
+  }
+
+  private void sendMessageToMQ(List<OrderedItem> allOrderedItems)
+      throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
+
+    try (Connection connection = factory.newConnection(); Channel channel = connection.createChannel()) {
+      channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+      channel.basicPublish("", QUEUE_NAME, null, writeToByteArray(allOrderedItems));
+    }
+  }
+
 }
