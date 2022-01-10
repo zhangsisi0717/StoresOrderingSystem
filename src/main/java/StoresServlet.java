@@ -1,11 +1,9 @@
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import java.io.ByteArrayInputStream;
+import com.rabbitmq.client.MessageProperties;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -15,7 +13,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -31,6 +28,8 @@ import java.io.IOException;
 import java.sql.Date;
 import java.net.http.HttpClient;
 import org.apache.commons.dbcp2.*;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 @WebServlet(name = "StoresServlet", value = "/StoresServlet")
 public class StoresServlet extends HttpServlet {
@@ -55,22 +54,12 @@ public class StoresServlet extends HttpServlet {
   private static final int CUSTOMER_ID_IDX = 4;
   private static final int DATE_IDX = 5;
   private static final int DATE_CONTENT_IDX = 6;
-
-  private com.rabbitmq.client.ConnectionFactory factory;
-
+  private static final boolean DURABLE=true;
+  private static GenericObjectPool<Channel> pool = MQChannelPool.getPool();
 
   @Override
   public void init() throws ServletException {
     System.out.println("Servlet init() called");
-    try {
-      factory = new ConnectionFactory();
-      factory.setUri(CredentialConfig.getMqURI());
-      factory.setUsername(CredentialConfig.getMqUsername());
-      factory.setPassword(CredentialConfig.getMqPassword());
-    } catch (Exception e) {
-      System.out.println("Exception during init()");
-      e.printStackTrace();
-    }
   }
 
 //  private static final HttpClient client = null;
@@ -160,7 +149,7 @@ public class StoresServlet extends HttpServlet {
   }
 
   private void processBodyData(String postBodyJSONString)
-      throws SQLException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
+      throws Exception {
     //https://docs.oracle.com/javaee/7/api/javax/json/JsonObject.html
 
     List<OrderedItem> allOrderedItems = new ArrayList<>();
@@ -199,12 +188,16 @@ public class StoresServlet extends HttpServlet {
   }
 
   private void sendMessageToMQ(List<OrderedItem> allOrderedItems)
-      throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException, IOException, TimeoutException {
+      throws Exception {
 
-    try (Connection connection = factory.newConnection(); Channel channel = connection.createChannel()) {
-      channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-      channel.basicPublish("", QUEUE_NAME, null, writeToByteArray(allOrderedItems));
-    }
+    Channel channel = pool.borrowObject();
+    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+    channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, writeToByteArray(allOrderedItems));
+    pool.returnObject(channel);
   }
+
+//  private GenericObjectPool createConnectionPool(int size){
+//
+//  }
 
 }

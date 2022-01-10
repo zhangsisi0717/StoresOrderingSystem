@@ -3,7 +3,7 @@ public class testMQ {
   public static void main(String[] args) {
 
     for (int i = 0; i < 5; i++) {
-      Thread t = new Thread(new OrderProcessor(i));
+      Thread t = new Thread(new RunnableOrderProcessor(i));
       t.start();
     }
     Object monitor = new Object();

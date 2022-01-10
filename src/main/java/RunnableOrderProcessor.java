@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-public class OrderProcessor implements Runnable {
+public class RunnableOrderProcessor implements Runnable {
   private static final String QUEUE_NAME = "store_orders";
   private static final int PRE_FETCH_COUNT=1;
   public int numMessageConsumed=0;
@@ -19,7 +19,7 @@ public class OrderProcessor implements Runnable {
   public final int threadID;
 
 
-  public OrderProcessor(int threadID) {
+  public RunnableOrderProcessor(int threadID) {
     this.threadID = threadID;
     this.factory = new ConnectionFactory();
     try {
@@ -35,13 +35,14 @@ public class OrderProcessor implements Runnable {
   public void run(){
     try {
       channel = factory.newConnection().createChannel();
+      //durable=true
       channel.queueDeclare(QUEUE_NAME, false, false, false, null);
       //prefetch=1,sender won't dispatch a new message to a receiver until it has processed and acknowledged the previous one.
       channel.basicQos(PRE_FETCH_COUNT);
       DeliverCallback deliverCallback = (consumerTag, delivery) -> {
         List<OrderedItem> message = null;
         try {
-          message = OrderProcessor.fromByteArray(delivery.getBody());
+          message = RunnableOrderProcessor.fromByteArray(delivery.getBody());
           addOrdersToDB(message);
           this.numMessageConsumed ++;
         } catch (ClassNotFoundException | SQLException e) {
