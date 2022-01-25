@@ -36,7 +36,7 @@ public class RunnableOrderProcessor implements Runnable {
     try {
       channel = factory.newConnection().createChannel();
       //durable=true
-      channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+      channel.queueDeclare(QUEUE_NAME, true, false, false, null);
       //prefetch=1,sender won't dispatch a new message to a receiver until it has processed and acknowledged the previous one.
       channel.basicQos(PRE_FETCH_COUNT);
       DeliverCallback deliverCallback = (consumerTag, delivery) -> {
@@ -60,15 +60,6 @@ public class RunnableOrderProcessor implements Runnable {
     } catch (IOException | TimeoutException e ) {
       e.printStackTrace();
     }
-//    finally {
-//      if(consumerTagStr != null && channel != null){
-//        try {
-//          channel.basicCancel(consumerTagStr);
-//        } catch (IOException e) {
-//          e.printStackTrace();
-//        }
-//      }
-//    }
   }
 
   private void addOrdersToDB(List<OrderedItem> orderedItems) throws SQLException {

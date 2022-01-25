@@ -11,6 +11,7 @@ public class RunnableFileWriter implements Runnable {
   private static final String DELIMITER = ",";
   private BlockingQueue<String[]> queue;
   private String writeOutPath;
+  private static final int  POLL_TIME_OUT=100;
 
   public RunnableFileWriter(BlockingQueue<String[]> queue, String writeOutPath) {
     this.queue = queue;
@@ -29,7 +30,7 @@ public class RunnableFileWriter implements Runnable {
       BufferedWriter writer = new BufferedWriter(fw);
 
       while (active || !queue.isEmpty()) {
-        String[] lines = queue.poll(100, TimeUnit.MILLISECONDS);
+        String[] lines = queue.poll(POLL_TIME_OUT, TimeUnit.MILLISECONDS);
         if(lines != null){
           this.writeToCSV(lines, writer);
         }

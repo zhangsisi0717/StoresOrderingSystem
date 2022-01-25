@@ -1,6 +1,10 @@
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
-import org.apache.commons.dbcp2.*;
+import org.apache.commons.dbcp2.BasicDataSource;
+
 
 public class StoresOrdersDAO {
 
@@ -53,7 +57,7 @@ public class StoresOrdersDAO {
   }
 
 //  public static void main(String[] args) throws SQLException {
-//    StoresOrdersDAO test = new StoresOrdersDAO();
+//    DAO.StoresOrdersDAO test = new DAO.StoresOrdersDAO();
 //    Date date = Date.valueOf(LocalDate.now());
 //    OrderedItem item = new OrderedItem(12313,193225,"231231234",242,5,33.0,date);
 //    OrderedItem item2 = new OrderedItem(12313,124325,"231234",242,5,33.0,date);
