@@ -34,7 +34,7 @@ public class StoresServlet extends HttpServlet {
 
 
   private static final int VALID_URL_LENGTH_FOR_POST = 7;
-  private static final int VALID_URL_LENGTH_FOR_GET = 4;
+  private static final int VALID_URL_LENGTH_FOR_GET = 3;
   private static final String ORDER_ID_FLAG = "OrderID";
   private static final String ORDER_ID_URL_FLAG = "orderID";
   private static final String CUSTOMER_ID_FLAG = "CustomerID";
@@ -55,7 +55,7 @@ public class StoresServlet extends HttpServlet {
   private static final int CUSTOMER_ID_IDX = 4;
   private static final int DATE_IDX = 5;
   private static final int DATE_CONTENT_IDX = 6;
-  private static final int ORDER_ID_URL_IDX = 2;
+  private static final int ORDER_ID_URL_IDX = 1;
   private static final boolean DURABLE=true;
   private static final String NUM_RE_PATTERN="^\\d+$";
   private static final String SLASH_SEPARATOR="/";
@@ -81,19 +81,26 @@ public class StoresServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    // urlPath  = "/purchase/orderID/{orderID}"
-    // urlParts = [,purchase,orderID,{orderID}]
+    // urlPath  = "/orderID/{orderID}"
+    // urlParts = [,orderID,{orderID}]
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
     String urlPath = request.getPathInfo();
     String[] urlParts = urlPath.split(SLASH_SEPARATOR);
+    System.out.println(urlPath);
+    System.out.println("length of urlparts = " + urlParts.length);
+    for(int i=0;i<urlParts.length;i++){
+      System.out.println("i=="+ i + " " +urlParts[i]);
+    }
     if (urlPath == null || urlPath.isEmpty()) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
 
+    System.out.println("run here");
     try{
       String orderID = this.processGetURL(urlParts);
+      System.out.println("orderID= " + orderID);
       if(orderID.equals(EMPTY_STRING)){
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
@@ -123,8 +130,10 @@ public class StoresServlet extends HttpServlet {
   // urlParts = [,purchase,orderID,{orderID}]
   private String processGetURL(String[] urlParts) {
     if (urlParts.length != VALID_URL_LENGTH_FOR_GET || !urlParts[0].equals("") || !urlParts[ORDER_ID_URL_IDX].equals(ORDER_ID_URL_FLAG)){
+      System.out.println("run here 2");
       return EMPTY_STRING;
     }
+    System.out.println("run here 3");
     return urlParts[ORDER_ID_URL_IDX+1];
   }
 
@@ -134,7 +143,7 @@ public class StoresServlet extends HttpServlet {
     MongoCursor<Document> res = collection.find(filter).iterator();
     JsonArrayBuilder jsonArray = Json.createArrayBuilder();
     while(res.hasNext()){
-      jsonArray.add(res.next().toJson());
+      jsonArray.add(Json.createReader(new StringReader(res.next().toJson())).readObject());
     }
     JsonObject findResult = Json.createObjectBuilder().add("findResult", jsonArray).build();
     return findResult;

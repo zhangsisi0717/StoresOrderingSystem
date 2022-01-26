@@ -51,6 +51,8 @@ public class HttpClientsPost {
   private static final int CONNECTION_TIME_OUT = 20;
   private static final int CREATED = 201;
   private static final int UUID_UB = 12;
+  private static final String NEW_LINE = "\n";
+  private static final String EMPTY_STRING="";
   private static final String URI_FORMAT = "http://%s/StoresOrderingSystem/purchase/%d/customer/%d/date/%s";
   private static final String DATE_FORMAT = "yyyyMMdd";
   private static final String HEADER_1 = "User-Agent";
@@ -77,37 +79,38 @@ public class HttpClientsPost {
 
   public void post() throws URISyntaxException, IOException, InterruptedException, NullException {
     this.genAllItems();
-//    System.out.println("order items: = " + this.genAllItems().toString());
     this.request = this.genRequest();
     this.requestStats.incAttemptedRequest();
     this.requestStats.incAttemptAddItems(this.numOfNewItems);
     this.timeStampBeforeRequest = LocalDateTime.now();
 
-    //https://mkyong.com/java/java-11-httpclient-examples/
+    //reference: https://mkyong.com/java/java-11-httpclient-examples/
     HttpResponse<String> response = HTTP_CLIENT.send(this.request, HttpResponse.BodyHandlers.ofString());
+    this.response = response;
     this.timeStampAfterRequest = LocalDateTime.now();
     if(response.statusCode() == CREATED){
       this.requestStats.incSuccess();
       this.requestStats.incItems(this.numOfNewItems);
-    }
-    this.response = response;
-
-
-    //{clientId, timeZone, status_code, timeStampBeforeRequest,latency}
-    Long latencyMillis = Duration.between(this.timeStampBeforeRequest,this.timeStampAfterRequest).toMillis();
-    String latency = String.valueOf(latencyMillis);
-
-//    if(response.statusCode() !=CREATED){
-//      singleRequestResult[5] = this.allItems.toString();
-//    }
-    if(response.statusCode()==CREATED){
+      //{clientId, timeZone, status_code, timeStampBeforeRequest,latency}
+      Long latencyMillis = Duration.between(this.timeStampBeforeRequest,this.timeStampAfterRequest).toMillis();
+      String latency = String.valueOf(latencyMillis);
       String orderID = String.valueOf(response.body());
-      orderID = orderID.replace("\n","");
+      orderID = orderID.replace(NEW_LINE,EMPTY_STRING);
       String[] singleRequestResult = {orderID,String.valueOf(this.clientId),this.timeZone.toString(),String.valueOf(this.response.statusCode()),latency};
       this.queue.add(singleRequestResult);
       this.requestStats.addToLatencyList(latencyMillis);
     }
     System.out.println("client " + this.getClientId() + ", timeZone: " + this.timeZone.toString() +": "+" status code: " + response.statusCode() +" response: " + response.body());
+//    if(response.statusCode() !=CREATED){
+//      singleRequestResult[5] = this.allItems.toString();
+//    }
+//    if(response.statusCode()==CREATED){
+//      String orderID = String.valueOf(response.body());
+//      orderID = orderID.replace("\n","");
+//      String[] singleRequestResult = {orderID,String.valueOf(this.clientId),this.timeZone.toString(),String.valueOf(this.response.statusCode()),latency};
+//      this.queue.add(singleRequestResult);
+//      this.requestStats.addToLatencyList(latencyMillis);
+//    }
   }
 
 

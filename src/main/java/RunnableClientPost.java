@@ -21,16 +21,16 @@ public class RunnableClientPost implements Runnable {
 
   public RunnableClientPost(int id, TimeZone timeZone, CountDownLatch completed,
       Map<OptionsFlags, Object> options, LocalDateTime startTimeStamp, int timeDiffMin,
-      RequestStats requestCounter, BlockingQueue queue) {
+      RequestStats requestStats, BlockingQueue queue) {
     this.id = id;
     this.timeZone = timeZone;
     this.completed = completed;
     this.options = options;
     this.startTimeStamp = startTimeStamp;
     this.timeDiffMin = timeDiffMin;
-    this.requestCounter = requestCounter;
+    this.requestCounter = requestStats;
     this.queue = queue;
-    this.genSleepTime();
+    this.sleepTime = this.genSleepTime();
 
   }
 
@@ -57,8 +57,8 @@ public class RunnableClientPost implements Runnable {
     this.completed.countDown();
   }
 
-  private void genSleepTime(){
-    this.sleepTime = HOUR_TO_MS / Integer.valueOf(this.options.get(OptionsFlags.numPurchasesPerHour).toString());
+  private int genSleepTime(){
+    return HOUR_TO_MS / Integer.valueOf(this.options.get(OptionsFlags.numPurchasesPerHour).toString());
   }
 
 }

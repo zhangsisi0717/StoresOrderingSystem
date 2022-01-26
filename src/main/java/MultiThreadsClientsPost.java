@@ -51,8 +51,7 @@ public class MultiThreadsClientsPost {
       Runnable thread = new RunnableClientPost(i + 1, TimeZone.WEST, completed, options,
           startTimeStampWest, REQUEST_DURATION,requestStats,queue);
       new Thread(thread).start();
-    }
-    ;
+    };
 
     while (true) {
       if (Duration.between(startTimeStampWest, LocalDateTime.now()).toMinutes() >= TIME_ZONE_DIFF) {

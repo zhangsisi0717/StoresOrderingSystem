@@ -48,6 +48,14 @@ public class RequestStats {
     return totalNumOfNewItems;
   }
 
+  public Long get99PResponseTime(){
+    return  this.getLatencyList().get((int)(this.numSuccessfulRequest*0.99));
+  }
+
+  public Long get95PResponseTime(){
+    return  this.getLatencyList().get((int)(this.numSuccessfulRequest*0.95));
+  }
+
   @Override
   public String toString() {
     return "RequestStats{" +
